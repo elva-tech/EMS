@@ -11,7 +11,7 @@ import {
   Receipt
 } from 'lucide-react';
 
-const Sidebar = ({ currentPage, setCurrentPage }) => {
+const ManagerSidebar = ({ currentPage, setCurrentPage }) => {
   const menuSections = [
     {
       title: 'Stock Management',
@@ -21,22 +21,22 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
         { id: 'stock', label: 'Stock', icon: LayoutDashboard, color: 'text-green-600' }
       ]
     },
-    // {
-    //   title: 'Work Management',
-    //   items: [
-    //     { id: 'dwa', label: 'DWA', icon: FileText, color: 'text-purple-600' },
-    //     { id: 'di', label: 'Delivery Instructions', icon: Truck, color: 'text-cyan-600' },
-    //     { id: 'workorder', label: 'Work Orders', icon: ClipboardList, color: 'text-indigo-600' },
-    //     { id: 'indent', label: 'Indent', icon: FolderOpen, color: 'text-pink-600' }
-    //   ]
-    // },
-    // {
-    //   title: 'Reports',
-    //   items: [
-    //     { id: 'inventory', label: 'Inventory', icon: BarChart3, color: 'text-teal-600' },
-    //     { id: 'billing', label: 'Billing', icon: Receipt, color: 'text-amber-600' }
-    //   ]
-    // }
+    {
+      title: 'Work Management',
+      items: [
+        { id: 'dwa', label: 'DWA', icon: FileText, color: 'text-purple-600' },
+        { id: 'di', label: 'Delivery Instructions', icon: Truck, color: 'text-cyan-600' },
+        { id: 'workorder', label: 'Work Orders', icon: ClipboardList, color: 'text-indigo-600' },
+        { id: 'indent', label: 'Indent', icon: FolderOpen, color: 'text-pink-600' }
+      ]
+    },
+    {
+      title: 'Reports',
+      items: [
+        { id: 'inventory', label: 'Inventory', icon: BarChart3, color: 'text-teal-600' },
+        { id: 'billing', label: 'Billing', icon: Receipt, color: 'text-amber-600' }
+      ]
+    }
   ];
   
   return (
@@ -78,4 +78,4 @@ const Sidebar = ({ currentPage, setCurrentPage }) => {
   );
 };
 
-export default Sidebar;
+export default ManagerSidebar;

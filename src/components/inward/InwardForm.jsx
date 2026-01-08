@@ -75,15 +75,23 @@ const InwardForm = ({ onBack }) => {
 
   const updateItem = (index, field, value) => {
     const newItems = [...items];
-    newItems[index][field] = value;
 
-    if (field === 'itemId') {
-    newItems[index].itemId = Number(value);
-  }
+    // Update the field being typed
+    newItems[index][field] = field === 'itemId' ? Number(value) : value;
 
-    if (['actualReceipt', 'reject', 'short'].includes(field)) {
-      const item = newItems[index];
-      item.accepted = calculateAccepted(item.actualReceipt, item.reject, item.short);
+    // Calculation Variables
+    const challan = Number(newItems[index].asPerChallan) || 0;
+    const actual = Number(newItems[index].actualReceipt) || 0;
+    const reject = Number(newItems[index].reject) || 0;
+
+    // logic: Only calculate Short if Actual Receipt is entered ( > 0 )
+    if (actual > 0) {
+      newItems[index].short = challan - actual;
+      newItems[index].accepted = actual - reject;
+    } else {
+      // Keep them at 0 or empty until Actual Receipt is provided
+      newItems[index].short = 0;
+      newItems[index].accepted = 0;
     }
 
     setItems(newItems);
@@ -230,10 +238,13 @@ const InwardForm = ({ onBack }) => {
                     <td className="border-r border-gray-200 px-4 py-2">
                       <input
                         type="number"
-                        min="0"
-                        className="w-full px-2 py-1.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        value={item.short}
-                        onChange={(e) => updateItem(idx, 'short', Number(e.target.value))}
+                        className="w-full px-2 py-1.5 border border-gray-300 rounded bg-gray-100 font-semibold text-gray-600"
+                        value={
+                          item.actualReceipt > item.asPerChallan
+                            ? `+${item.actualReceipt - item.asPerChallan} Excess`
+                            : (item.actualReceipt > 0 ? item.short : '')
+                        }
+                        readOnly
                       />
                     </td>
                     <td className="border-r border-gray-200 px-4 py-2">

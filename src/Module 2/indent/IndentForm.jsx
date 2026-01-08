@@ -117,6 +117,13 @@ const IndentForm = ({ onBack }) => {
       return;
     }
 
+    // --- LOCAL STORAGE SYNC ---
+    const existingIndents = JSON.parse(localStorage.getItem('indents') || '[]');
+    if (!existingIndents.includes(formData.indentNo)) {
+       localStorage.setItem('indents', JSON.stringify([...existingIndents, formData.indentNo]));
+    }
+    // -------------------------
+
     dispatch({ 
       type: 'ADD_INDENT', 
       payload: { 

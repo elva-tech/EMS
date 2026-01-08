@@ -1,10 +1,13 @@
-// src/App.jsx
-// UPDATED WITH MODULE 2 ROUTES
-
 import React, { useState } from 'react';
 import { useAuth } from './hooks/useAuth';
+
+// Auth Pages
 import LoginPage from './components/auth/LoginPage';
+import ManagerLoginPage from './components/auth/ManagerLoginPage';
+
+// Layouts
 import Layout from './components/layout/Layout';
+import ManagerLayout from './Module 2/layout/ManagerLayout';
 
 // Module 1 Components
 import InwardModule from './components/inward/InwardModule';
@@ -20,45 +23,41 @@ import InventoryModule from './Module 2/inventory/InventoryModule';
 import BillingModule from './Module 2/billing/BillingModule';
 
 const App = () => {
-  const { isAuthenticated } = useAuth();
-  const [currentModule, setCurrentModule] = useState('inward');
+  const { isAuthenticated, user } = useAuth();
+  // Keep this name consistent everywhere
+  const [currentModule, setCurrentModule] = useState('stock');
   
+  const isManagerRoute = window.location.pathname.includes('/manager');
+
+  // 1. LOGIN REDIRECTION
   if (!isAuthenticated) {
-    return <LoginPage />;
+    return isManagerRoute ? <ManagerLoginPage /> : <LoginPage />;
   }
-  
-  const renderModule = () => {
-    switch (currentModule) {
-      // Module 1
-      case 'inward':
-        return <InwardModule />;
-      case 'outward':
-        return <OutwardModule />;
-      case 'stock':
-        return <StockDashboard />;
-      
-      // Module 2
-      case 'dwa':
-        return <DWAModule />;
-      case 'di':
-        return <DIModule />;
-      case 'workorder':
-        return <WorkOrderModule />;
-      case 'indent':
-        return <IndentModule />;
-      case 'inventory':
-        return <InventoryModule />;
-      case 'billing':
-        return <BillingModule />;
-      
-      default:
-        return <InwardModule />;
-    }
-  };
-  
+
+  // 2. MANAGER WORLD (Shows EVERYTHING)
+  if (user?.role === 'manager') {
+    return (
+      <ManagerLayout currentPage={currentModule} setCurrentPage={setCurrentModule}>
+        {currentModule === 'stock' && <StockDashboard />}
+        {currentModule === 'inward' && <InwardModule />}
+        {currentModule === 'outward' && <OutwardModule />}
+        {currentModule === 'dwa' && <DWAModule />}
+        {currentModule === 'di' && <DIModule />}
+        {currentModule === 'workorder' && <WorkOrderModule />}
+        {currentModule === 'indent' && <IndentModule />}
+        {currentModule === 'inventory' && <InventoryModule />}
+        {currentModule === 'billing' && <BillingModule />}
+      </ManagerLayout>
+    );
+  }
+
+  // 3. ADMIN WORLD (Store Only)
+  // FIXED: Changed setCurrentPage={setCurrentPage} to setCurrentPage={setCurrentModule}
   return (
     <Layout currentPage={currentModule} setCurrentPage={setCurrentModule}>
-      {renderModule()}
+      {currentModule === 'stock' && <StockDashboard />}
+      {currentModule === 'inward' && <InwardModule />}
+      {currentModule === 'outward' && <OutwardModule />}
     </Layout>
   );
 };

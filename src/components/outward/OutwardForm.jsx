@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // Added useEffect
 import { Plus, Trash2 } from 'lucide-react';
 import { useStock } from '../../hooks/useStock';
 import Button from '../common/Button';
@@ -47,9 +47,17 @@ const AddSubContractorModal = ({ isOpen, onClose }) => {
 const OutwardForm = ({ onBack }) => {
   const { state, dispatch } = useStock();
   const [showModal, setShowModal] = useState(false);
+  
+  // FETCH INDENTS FROM LOCALSTORAGE
+  const [indentOptions, setIndentOptions] = useState([]);
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem('indents') || '[]');
+    setIndentOptions(saved);
+  }, []);
+
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    indentNo: '', // Replaced DC No with Indent No per PDF 
+    indentNo: '', 
     vehicleNo: '',
     subContractorId: ''
   });
@@ -79,7 +87,24 @@ const OutwardForm = ({ onBack }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Input label="Date" type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} required />
-        <Input label="Indent No" value={formData.indentNo} onChange={(e) => setFormData({ ...formData, indentNo: e.target.value })} placeholder="IND-0000" required />
+        
+        {/* CHANGED TO DROPDOWN */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Indent No</label>
+          <select
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white"
+            value={formData.indentNo}
+            onChange={(e) => setFormData({ ...formData, indentNo: e.target.value })}
+            required
+          >
+            <option value="">Select Indent No</option>
+            {indentOptions.map((no, idx) => (
+              <option key={idx} value={no}>{no}</option>
+            ))}
+            {indentOptions.length === 0 && <option disabled>No Indents found</option>}
+          </select>
+        </div>
+
         <Input label="Vehicle No" value={formData.vehicleNo} onChange={(e) => setFormData({ ...formData, vehicleNo: e.target.value })} placeholder="KA-00-XX-0000" required />
 
         <div>
@@ -128,13 +153,13 @@ const OutwardForm = ({ onBack }) => {
                   <td className="p-3">
                     <select
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      value={item.itemId} // or item.itemId
+                      value={item.itemId}
                       onChange={(e) => {
                         updateItem(idx, 'itemId', Number(e.target.value))
                         e.target.blur();
                       }}
-                      onFocus={(e) => (e.target.size = 6)} // Shows 6 items and forces a scrollbar
-                      onBlur={(e) => (e.target.size = 1)}  // Returns to a normal single line
+                      onFocus={(e) => (e.target.size = 6)}
+                      onBlur={(e) => (e.target.size = 1)}
                       required
                     >
                       <option value="">Select Item</option>

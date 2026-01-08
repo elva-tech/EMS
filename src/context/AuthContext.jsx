@@ -1,32 +1,63 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState, useEffect } from 'react';
 
-export const AuthContext = createContext();
+// 1. Create the Context
+export const AuthContext = createContext(null);
 
+// 2. The Provider Component
 export const AuthProvider = ({ children }) => {
-  // Check localStorage on initial load to keep user logged in
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('is_auth') === 'true';
-  });
-  
-  const login = (username, password) => {
-    // Mock authentication
-    if (username === 'admin' && password === 'admin123') {
+  const [user, setUser] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Sync state with LocalStorage on boot
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        setIsAuthenticated(true);
+      } catch (e) {
+        localStorage.removeItem('user');
+      }
+    }
+    setLoading(false);
+  }, []);
+
+  const login = (username, password, role = 'admin') => {
+    // MANAGER AUTH LOGIC
+    if (role === 'manager' && username === 'manager' && password === 'manager123') {
+      const managerData = { username: 'Project Manager', role: 'manager' };
+      setUser(managerData);
       setIsAuthenticated(true);
-      // Save to browser storage
-      localStorage.setItem('is_auth', 'true');
+      localStorage.setItem('user', JSON.stringify(managerData));
       return true;
     }
+
+    // ADMIN AUTH LOGIC
+    if (role === 'admin' && username === 'admin' && password === 'admin123') {
+      const adminData = { username: 'Store Admin', role: 'admin' };
+      setUser(adminData);
+      setIsAuthenticated(true);
+      localStorage.setItem('user', JSON.stringify(adminData));
+      return true;
+    }
+
     return false;
   };
-  
+
   const logout = () => {
+    setUser(null);
     setIsAuthenticated(false);
-    // Clear browser storage
-    localStorage.removeItem('is_auth');
+    localStorage.removeItem('user');
+    window.location.href = '/'; 
   };
-  
+
+  // Don't render children until we know if the user is logged in from localStorage
+  if (loading) return null;
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
