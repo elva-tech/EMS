@@ -3,7 +3,7 @@ import { ChevronLeft, Printer, Download } from 'lucide-react';
 import Button from '../../components/common/Button';
 import BillPDF from './BillPDF';
 
-const BillPreview = ({ workOrder, onBack }) => {
+const BillPreview = ({ indent, onBack }) => {
   const componentRef = useRef();
 
   const handleDownload = () => {
@@ -29,7 +29,7 @@ const BillPreview = ({ workOrder, onBack }) => {
       
       {/* Container for the PDF Table */}
       <div className="max-w-4xl mx-auto shadow-2xl bg-white print:shadow-none print:m-0">
-        <BillPDF ref={componentRef} workOrder={workOrder} />
+        <BillPDF ref={componentRef} indent={indent} />
       </div>
 
       {/* CSS Guard: Ensures only BillPDF prints */}

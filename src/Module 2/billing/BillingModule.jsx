@@ -11,17 +11,17 @@ const BillingModule = () => {
   const { state } = useStock();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedWO, setSelectedWO] = useState(null);
+  const [selectedIndent, setSelectedIndent] = useState(null); // Changed variable name
   const itemsPerPage = 10;
-  
-  // Only show completed work orders
-  const completedWOs = state.workOrders.filter(wo => wo.status === 'Completed');
+// FIX: Renamed variable to match what the rest of the code expects
+  const completedIndents = state.indents.filter(indent => indent.status === 'Completed');
   
   const filteredEntries = useMemo(() => {
-    return completedWOs.filter(entry =>
-      entry.woNumber.toLowerCase().includes(searchTerm.toLowerCase())
+    return completedIndents.filter(entry =>
+      // Use indentNo/dwaNo instead of woNumber
+      (entry.indentNo || '').toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [completedWOs, searchTerm]);
+  }, [completedIndents, searchTerm]);
   
   const paginatedEntries = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -30,19 +30,17 @@ const BillingModule = () => {
   
   const totalPages = Math.ceil(filteredEntries.length / itemsPerPage);
   
-  if (selectedWO) {
-    return <BillPreview workOrder={selectedWO} onBack={() => setSelectedWO(null)} />;
+  if (selectedIndent) {
+    return <BillPreview indent={selectedIndent} onBack={() => setSelectedIndent(null)} />;
   }
-  
-  const columns = [
-    { header: 'WO Number', key: 'woNumber' },
+
+  // Update columns to show the right data
+const columns = [
+    { header: 'Indent Number', key: 'indentNo' }, // Changed key
     { header: 'Date', key: 'date' },
     { 
       header: 'DWA Number', 
-      render: (row) => {
-        const dwa = state.dwaEntries.find(d => d.id === row.dwaId);
-        return dwa?.dwaNumber || '-';
-      }
+      render: (row) => row.dwaNo || '-' // Direct read from indent
     },
     { 
       header: 'Items', 
@@ -58,7 +56,7 @@ const BillingModule = () => {
         <button
           onClick={(e) => {
             e.stopPropagation();
-            setSelectedWO(row);
+            setSelectedIndent(row);
           }}
           className="text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
         >
@@ -68,6 +66,10 @@ const BillingModule = () => {
       )
     }
   ];
+
+  if (selectedIndent) {
+    return <BillPreview indent={selectedIndent} onBack={() => setSelectedIndent(null)} />;
+  }
   
   return (
     <div>
@@ -76,7 +78,7 @@ const BillingModule = () => {
         <p className="text-gray-600 mt-1">Generate bills for completed work orders</p>
       </div>
       
-      {completedWOs.length === 0 ? (
+      {completedIndents.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <div className="flex flex-col items-center gap-3">
             <div className="bg-amber-100 p-4 rounded-full">

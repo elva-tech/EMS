@@ -3,176 +3,153 @@ import { Plus, Trash2, ChevronLeft } from 'lucide-react';
 import { useStock } from '../../hooks/useStock';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import Modal from '../../components/common/Modal';
 
-const AddSubContractorModal = ({ isOpen, onClose, onAdd }) => {
-  const { dispatch } = useStock();
-  const [name, setName] = useState('');
-  const [region, setRegion] = useState('');
-
-  const handleSubmit = () => {
-    if (!name || !region) return;
-    const newId = Date.now();
-    dispatch({ type: 'ADD_SUBCONTRACTOR', payload: { id: newId, name, region } });
-    onAdd(newId, region);
-    setName(''); setRegion(''); onClose();
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Add New Sub-contractor">
-      <div className="space-y-4">
-        <Input label="Sub-contractor Name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter name" required />
-        <Input label="Region / Location" value={region} onChange={(e) => setRegion(e.target.value)} placeholder="Enter region" required />
-        <div className="flex gap-2 justify-end mt-6">
-          <Button variant="secondary" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSubmit}>Save Sub-contractor</Button>
-        </div>
-      </div>
-    </Modal>
-  );
-};
-
-const IndentForm = ({ onBack }) => {
+const DWAForm = ({ onBack }) => {
   const { state, dispatch } = useStock();
-  const [showModal, setShowModal] = useState(false);
+  
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    indentNo: '',
-    subContractorId: '',
-    region: ''
+    dwaNumber: '',
+    date: new Date().toISOString().split('T')[0]
   });
-  const [selectedWOs, setSelectedWOs] = useState([]);
-  const [items, setItems] = useState([]);
 
-  const handleSubChange = (e) => {
-    if (e.target.value === 'add-new') {
-      setShowModal(true);
-    } else {
-      const sub = state.subContractors.find(s => s.id === Number(e.target.value));
-      setFormData({ ...formData, subContractorId: Number(e.target.value), region: sub?.region || '' });
+  const [tempItem, setTempItem] = useState({ itemId: '', quantity: '' });
+  const [addedItems, setAddedItems] = useState([]);
+
+  const handleAddClick = () => {
+    if (!tempItem.itemId || !tempItem.quantity || tempItem.quantity <= 0) return;
+    
+    setAddedItems([...addedItems, { 
+      itemId: Number(tempItem.itemId), 
+      quantity: Number(tempItem.quantity) 
+    }]);
+
+    // Reset temporary state
+    setTempItem({ itemId: '', quantity: '' });
+  };
+
+  const handleCreate = () => {
+    if (!formData.dwaNumber || addedItems.length === 0) {
+      alert("Please provide a DWA Number and add at least one item.");
+      return;
     }
-  };
 
-  const handleWOSelection = (woId) => {
-    const wo = state.workOrders.find(w => w.id === Number(woId));
-    if (selectedWOs.includes(wo.id)) {
-      setSelectedWOs(selectedWOs.filter(id => id !== wo.id));
-      setItems(items.filter(item => item.woNumber !== wo.woNumber));
-    } else {
-      setSelectedWOs([...selectedWOs, wo.id]);
-      const newItems = wo.items.map(i => ({ itemId: i.itemId, woNumber: wo.woNumber, estimated: i.estimated, issued: i.issued || 0, currentIssuing: 0 }));
-      setItems([...items, ...newItems]);
-    }
-  };
-
-  const updateQty = (woNo, itemId, val) => {
-    setItems(items.map(i => (i.woNumber === woNo && i.itemId === itemId) ? { ...i, currentIssuing: Number(val) } : i));
-  };
-
-  const handleSubmit = () => {
-    if (!formData.indentNo || !formData.subContractorId) return alert('Fill required fields');
-    dispatch({ type: 'ADD_INDENT', payload: { ...formData, workOrderIds: selectedWOs, items: items.filter(i => i.currentIssuing > 0) } });
+    dispatch({
+      type: 'ADD_DWA',
+      payload: { ...formData, items: addedItems, id: Date.now() }
+    });
     onBack();
   };
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-      <button onClick={onBack} className="mb-6 flex items-center font-bold text-gray-700">
+      <button 
+        onClick={onBack} 
+        className="mb-6 flex items-center text-gray-900 hover:text-black font-bold transition-colors"
+      >
         <ChevronLeft size={20} /> Back to List
       </button>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Fixed Visibility: Added font-bold and shadow-sm to make it stand out */}
+
+      <h2 className="text-2xl font-bold mb-6 text-gray-900">Create DWA Entry</h2>
+
+      <div className="grid grid-cols-2 gap-4 mb-8">
         <Input 
-          label="Indent No" 
-          className="font-bold shadow-sm border-gray-300"
-          value={formData.indentNo} 
-          onChange={(e) => setFormData({ ...formData, indentNo: e.target.value })} 
-          placeholder="IND-0000" 
+          label="DWA Number" 
+          placeholder="Enter DWA No." 
+          value={formData.dwaNumber} 
+          onChange={e => setFormData({...formData, dwaNumber: e.target.value})} 
           required 
         />
-        
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">Sub-contractor</label>
-          <select 
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white shadow-sm focus:ring-2 focus:ring-blue-500" 
-            value={formData.subContractorId} 
-            onChange={handleSubChange}
-          >
-            <option value="">Select Sub-contractor</option>
-            {state.subContractors.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            <option value="add-new" className="text-blue-600 font-bold italic">+ Add New Sub-contractor</option>
-          </select>
-        </div>
-
         <Input 
-          label="Region" 
-          className="bg-gray-50 font-semibold text-gray-600"
-          value={formData.region} 
-          readOnly 
+          label="Date" 
+          type="date" 
+          value={formData.date} 
+          onChange={e => setFormData({...formData, date: e.target.value})} 
         />
       </div>
 
-      <div className="mb-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">Select Work Orders</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {state.workOrders.filter(w => w.status !== 'Completed').map(wo => (
-            <div 
-              key={wo.id} 
-              onClick={() => handleWOSelection(wo.id)} 
-              className={`p-3 border rounded-lg cursor-pointer transition-all ${selectedWOs.includes(wo.id) ? 'bg-blue-50 border-blue-500 ring-1 ring-blue-500' : 'border-gray-200 hover:border-gray-300'}`}
+      {/* Input Section */}
+      <div className="bg-gray-50 p-4 rounded-lg mb-6 border border-gray-200">
+        <h3 className="text-sm font-bold text-gray-700 uppercase mb-3">Add Items</h3>
+        <div className="flex gap-4 items-end">
+          <div className="flex-1">
+            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Select Item</label>
+            {/* FIXED: Added Module 1 size/blur logic */}
+            <select 
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500"
+              value={tempItem.itemId}
+              onChange={(e) => {
+                setTempItem({...tempItem, itemId: e.target.value});
+                e.target.blur(); // Snaps back to original position after selection
+              }}
+              onFocus={(e) => (e.target.size = 6)}
+              onBlur={(e) => (e.target.size = 1)}
             >
-              <p className="font-bold text-sm">{wo.woNumber}</p>
-              <p className="text-xs text-gray-500">{wo.region}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {selectedWOs.length > 0 && (
-        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm mb-6">
-          <table className="w-full text-sm">
-            <thead className="bg-blue-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-left font-bold text-blue-900 uppercase tracking-wider">WO No</th>
-                <th className="px-4 py-3 text-left font-bold text-blue-900 uppercase tracking-wider">Material</th>
-                <th className="px-4 py-3 text-center font-bold text-blue-900 uppercase w-32">Balance</th>
-                <th className="px-4 py-3 text-center font-bold text-blue-900 uppercase w-32">Issue Qty</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {items.map((item, idx) => (
-                <tr key={idx} className="hover:bg-gray-50">
-                  <td className="p-3 font-bold text-blue-600">{item.woNumber}</td>
-                  <td className="p-3 font-medium text-gray-800">{state.items.find(i => i.id === item.itemId)?.name}</td>
-                  <td className="p-3 text-center font-bold text-red-600">{item.estimated - item.issued}</td>
-                  <td className="p-3">
-                    <input 
-                      type="number" 
-                      className="w-full p-2 border border-gray-300 rounded text-center font-bold focus:border-blue-500 outline-none" 
-                      value={item.currentIssuing} 
-                      onChange={(e) => updateQty(item.woNumber, item.itemId, e.target.value)} 
-                    />
-                  </td>
-                </tr>
+              <option value="">-- Choose Item --</option>
+              {state.items.map(i => (
+                <option key={i.id} value={i.id}>{i.name}</option>
               ))}
-            </tbody>
-          </table>
+            </select>
+          </div>
+          <div className="w-48">
+            <label className="block text-xs font-bold text-gray-500 mb-1 uppercase">Quantity</label>
+            <input 
+              type="number" 
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="0"
+              value={tempItem.quantity}
+              onChange={e => setTempItem({...tempItem, quantity: e.target.value})}
+            />
+          </div>
+          <Button onClick={handleAddClick} type="button">
+            <Plus size={20}/> Add to List
+          </Button>
         </div>
-      )}
-
-      <div className="flex gap-3 justify-end pt-6 border-t border-gray-100">
-        <Button variant="secondary" onClick={onBack}>Cancel</Button>
-        <Button onClick={handleSubmit} className="px-8 shadow-md">Create Indent Entry</Button>
       </div>
 
-      <AddSubContractorModal 
-        isOpen={showModal} 
-        onClose={() => setShowModal(false)} 
-        onAdd={(id, reg) => setFormData({...formData, subContractorId: id, region: reg})} 
-      />
+      {/* Added Items Table Preview */}
+      <div className="overflow-x-auto border border-gray-200 rounded-lg mb-8">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b-2 border-blue-200">
+              <th className="px-4 py-3 text-left text-xs font-bold text-blue-900 uppercase">Item Name</th>
+              <th className="px-4 py-3 text-left text-xs font-bold text-blue-900 uppercase">Qty</th>
+              <th className="px-4 py-3 text-center text-xs font-bold text-blue-900 uppercase">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {addedItems.length > 0 ? (
+              addedItems.map((item, idx) => {
+                const itemInfo = state.items.find(i => i.id === item.itemId);
+                return (
+                  <tr key={idx} className="border-b border-gray-200 hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-900">{itemInfo?.name}</td>
+                    <td className="px-4 py-3 font-semibold text-blue-700">{item.quantity}</td>
+                    <td className="px-4 py-3 text-center">
+                      <button 
+                        onClick={() => setAddedItems(addedItems.filter((_, i) => i !== idx))} 
+                        className="text-red-500 hover:bg-red-50 p-1.5 rounded"
+                      >
+                        <Trash2 size={18}/>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan="3" className="px-4 py-10 text-center text-gray-400 italic">No items added to the list yet.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="flex justify-end gap-3 border-t border-gray-200 pt-6">
+        <Button variant="secondary" onClick={onBack}>Cancel</Button>
+        <Button onClick={handleCreate}>Create DWA Record</Button>
+      </div>
     </div>
   );
 };
 
-export default IndentForm;
+export default DWAForm;

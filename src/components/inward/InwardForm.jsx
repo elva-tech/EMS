@@ -73,7 +73,7 @@ const InwardForm = ({ onBack }) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const updateItem = (index, field, value) => {
+ const updateItem = (index, field, value) => {
     const newItems = [...items];
 
     // Update the field being typed
@@ -84,12 +84,14 @@ const InwardForm = ({ onBack }) => {
     const actual = Number(newItems[index].actualReceipt) || 0;
     const reject = Number(newItems[index].reject) || 0;
 
-    // logic: Only calculate Short if Actual Receipt is entered ( > 0 )
+    // logic: Only calculate if Actual Receipt is entered ( > 0 )
     if (actual > 0) {
-      newItems[index].short = challan - actual;
-      newItems[index].accepted = actual - reject;
+      // 1. Short Calculation
+      newItems[index].short = Math.max(0, challan - actual);
+      
+      // 2. Accepted Calculation (CRITICAL FIX: Math.max ensures it never drops below 0)
+      newItems[index].accepted = Math.max(0, actual - reject);
     } else {
-      // Keep them at 0 or empty until Actual Receipt is provided
       newItems[index].short = 0;
       newItems[index].accepted = 0;
     }

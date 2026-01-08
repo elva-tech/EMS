@@ -1,74 +1,64 @@
 import React from 'react';
 import { useStock } from '../../hooks/useStock';
 
-const BillPDF = React.forwardRef(({ workOrder }, ref) => {
+const BillPDF = React.forwardRef(({ indent }, ref) => {
   const { state } = useStock();
-  const dwa = state.dwaEntries?.find(d => d.id === workOrder.dwaId);
 
-  // Helper to calculate costs based on your image logic
-const calculateTotals = () => {
-  let totalMat = 0;
-  let totalErec = 0;
-  
-  // 1. We map over the items specifically attached to THIS Work Order
-  const rows = (workOrder.items || []).map(woItem => {
-    // 2. Find the rate information from the master items list in state
-    const masterItem = state.items.find(i => i.id === woItem.itemId);
-    
-    // 3. Get rates from masterItem, fallback to 0 if not found
-    const mRate = masterItem?.materialRate || 0;
-    const eRate = masterItem?.erectionRate || 0;
-    
-    // 4. Use 'issued' if it's a completed job, fallback to 'estimated' for preview
-    // This ensures that even if issued is 0, you see the potential cost
-    const qty = woItem.issued > 0 ? woItem.issued : (woItem.estimated || 0); 
-    
-    const mCost = mRate * qty;
-    const eCost = eRate * qty;
-    
-    totalMat += mCost;
-    totalErec += eCost;
+  const calculateTotals = () => {
+    let totalMat = 0;
+    let totalErec = 0;
 
-    return {
-      name: masterItem?.name || 'Unknown Item',
-      unit: masterItem?.unit || 'Nos',
-      qty,
-      mRate,
-      eRate,
-      mCost,
-      eCost,
-      rowTotal: mCost + eCost
-    };
-  });
+    // Use the items directly from the Indent entry
+    const rows = (indent.items || []).map(indentItem => {
+      const masterItem = state.items.find(i => i.id === indentItem.itemId);
+      
+      const mRate = masterItem?.materialRate || 0;
+      const eRate = masterItem?.erectionRate || 0;
+      const qty = indentItem.currentIssuing || 0; // Use real issued qty
 
-  return { rows, totalMat, totalErec, grandTotal: totalMat + totalErec };
-};
+      const mCost = mRate * qty;
+      const eCost = eRate * qty;
+      
+      totalMat += mCost;
+      totalErec += eCost;
+
+      return {
+        name: masterItem?.name || 'Item',
+        unit: masterItem?.unit || 'Nos',
+        qty,
+        mRate,
+        eRate,
+        mCost,
+        eCost,
+        rowTotal: mCost + eCost
+      };
+    });
+
+    return { rows, totalMat, totalErec, grandTotal: totalMat + totalErec };
+  };
 
   const { rows, totalMat, totalErec, grandTotal } = calculateTotals();
 
   return (
     <div ref={ref} className="bg-white p-8 text-[11px] font-sans text-black" id="printable-bill">
       <div className="border-[1.5px] border-black">
-        {/* Header Section */}
         <div className="grid grid-cols-12 border-b border-black">
           <div className="col-span-5 p-3 border-r border-black">
             <p className="font-bold text-xs mb-1">To,</p>
-            <p className="font-bold uppercase">The Executive Engineer(Ele)</p>
-            <p>O&M Division, BESCOM,</p>
-            <p>Tumkur.</p>
+            <p className="font-bold uppercase text-blue-900">Executive Engineer (Ele)</p>
+            <p>O&M Division, BESCOM, Tumkur.</p>
           </div>
           <div className="col-span-7">
             <div className="grid grid-cols-2 border-b border-black">
-              <div className="p-1.5 border-r border-black font-bold">Bill No: {workOrder.woNumber}</div>
-              <div className="p-1.5 text-right font-bold">GSTIN: 29AAICM6834H1Z2</div>
+               <div className="p-1.5 border-r border-black font-bold uppercase bg-gray-50">Invoice No: {indent.indentNo}</div>
+               <div className="p-1.5 text-right font-bold text-[9px]">GST: 29AAICM6834H1Z2</div>
             </div>
             <div className="grid grid-cols-2 border-b border-black">
-              <div className="p-1.5 border-r border-black font-bold">DWA No: {dwa?.dwaNumber || 'BESCOM/DWA/2024/7594'}</div>
-              <div className="p-1.5 text-right">Date: {workOrder.date}</div>
+              <div className="p-1.5 border-r border-black font-bold">DWA No: {indent.dwaNo}</div>
+              <div className="p-1.5 text-right font-semibold">Date: {indent.date}</div>
             </div>
-            <div className="grid grid-cols-2">
-              <div className="p-1.5 border-r border-black">WO No: {workOrder.woNumber}</div>
-              <div className="p-1.5 text-right">Subdiv: RSD 2</div>
+            <div className="p-1.5 text-center font-bold bg-yellow-50">
+              SUB-CONTRACTOR: {state.subContractors.find(s => s.id === indent.subContractorId)?.name}
             </div>
           </div>
         </div>
