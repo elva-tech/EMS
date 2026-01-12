@@ -5,6 +5,9 @@ import { useAuth } from './hooks/useAuth';
 import LoginPage from './components/auth/LoginPage';
 import ManagerLoginPage from './components/auth/ManagerLoginPage';
 
+// Dashboard page
+import Dashboard from './components/dashboard/Dashboard';
+
 // Layouts
 import Layout from './components/layout/Layout';
 import ManagerLayout from './Module 2/layout/ManagerLayout';
@@ -25,7 +28,7 @@ import BillingModule from './Module 2/billing/BillingModule';
 const App = () => {
   const { isAuthenticated, user } = useAuth();
   // Keep this name consistent everywhere
-  const [currentModule, setCurrentModule] = useState('stock');
+  const [currentModule, setCurrentModule] = useState('dashboard');
   
   const isManagerRoute = window.location.pathname.includes('/manager');
 
@@ -38,6 +41,7 @@ const App = () => {
   if (user?.role === 'manager') {
     return (
       <ManagerLayout currentPage={currentModule} setCurrentPage={setCurrentModule}>
+        {currentModule === 'dashboard' && <Dashboard />}
         {currentModule === 'stock' && <StockDashboard />}
         {currentModule === 'inward' && <InwardModule />}
         {currentModule === 'outward' && <OutwardModule />}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { 
+  LayoutGrid, // Icon for Dashboard
   ArrowDownToLine, 
   ArrowUpFromLine, 
   LayoutDashboard,
@@ -13,6 +14,13 @@ import {
 
 const ManagerSidebar = ({ currentPage, setCurrentPage }) => {
   const menuSections = [
+    // --- ADDED DASHBOARD SECTION ---
+    {
+      title: 'Home',
+      items: [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid, color: 'text-slate-800' },
+      ]
+    },
     {
       title: 'Stock Management',
       items: [
